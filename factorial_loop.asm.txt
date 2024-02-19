@@ -1,0 +1,126 @@
+.data
+prompt: .asciiz "Please input an integer value greater than or equal to 0: "
+error_int : .asciiz "The value you entered is less than zero. This program only works with values greater than or equal to zero."
+resultMsg: .asciiz "The factorial is: "
+askAgain: .asciiz "Would you like to do this again (Y/N): "
+your_input: .asciiz "Your input: "
+
+
+
+.text 
+
+.globl main
+
+main:
+li $v0, 4		#prompt
+la $a0, prompt
+syscall
+
+li $v0, 5		#take int
+syscall
+
+bltz $v0, errorMsg	#int validation check
+
+move $a0, $v0		#call rec fac function	
+jal factorial
+
+
+############ print ##############
+addi $sp, $sp, -8   	#push v0, a0 now is at 0($sp)     
+sw $v0, 4($sp)            
+
+
+li $v0, 4		#print your number :
+la $a0, your_input
+syscall
+
+lw $a0, 0($sp)
+addi $sp, $sp, 8
+li $v0, 1
+syscall
+
+
+li $v0, 11     		#print new line  
+li $a0, 10       
+syscall
+
+ 
+
+li $v0, 4		#print factorial outcome
+la $a0, resultMsg
+syscall
+
+
+lw $a0, -4($sp)
+addi $sp, $sp, 4
+li $v0, 1
+syscall
+
+
+li $v0, 11     		#print new line  
+li $a0, 10       
+syscall
+
+
+
+
+
+li $v0, 4		#prompt ask again
+la $a0, askAgain
+syscall
+
+			
+li $v0, 12         	# Read decision
+syscall            
+li $t0, 'Y'        
+bne $v0, $t0, exit 
+
+
+
+li $v0, 11     		#print new line  
+li $a0, 10       
+syscall
+
+
+j main
+
+
+
+
+
+factorial:
+
+addi $sp, $sp, -8   	#push $ra and $a0 to stack       
+sw $ra, 4($sp)            
+sw $a0, 0($sp)
+
+li $v0, 1		#base case
+blez $a0 fac_end
+
+
+lw $a0, 0($sp)
+addi $a0, $a0, -1	# rec step
+jal factorial
+
+mul $v0, $a0, $v0
+
+fac_end:
+
+lw $ra, 4($sp)          # poll $ra and $a0
+addi $sp, $sp, 8           
+lw $a0, 0($sp)	
+jr $ra 
+
+
+
+
+
+errorMsg:
+li $v0, 4	#print error message
+la $a0, error_int
+syscall
+j exit
+
+exit: 		#terminate programme
+li $v0, 10
+syscall

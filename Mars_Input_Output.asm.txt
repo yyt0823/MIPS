@@ -1,0 +1,106 @@
+.data
+    promptString: .asciiz "Input a string 30 characters or less: "
+    promptNumber: .asciiz "Input an integer greater than 0: "
+    errorMsgString: .asciiz "No input. Run again.\n"
+    errorMsgNumber: .asciiz "Wrong input. Run again\n"
+    openBracket: .asciiz "["
+    closeBracket: .asciiz "]"
+    buffer: .space 31  # 30 characters + null terminator
+    buffer2: .space 31 # Space for shifted string
+    msg: .asciiz "Shifted string = "
+
+.text
+.globl main
+main:
+    # Prompt and read string
+    li $v0, 4
+    la $a0, promptString
+    syscall
+    li $v0, 8
+    la $a0, buffer
+    li $a1, 31
+    syscall
+
+    # Check for empty string
+    lb $t0, buffer
+    beqz $t0, errorString
+
+    # Prompt and read integer
+    li $v0, 4
+    la $a0, promptNumber
+    syscall
+    li $v0, 5
+    syscall
+    blez $v0, errorNumber
+
+    # Save the shift amount
+    move $t2, $v0
+    
+    
+    
+    
+
+    la $a0, buffer
+    la $a1, buffer2
+    add $a0, $a0, $t2
+copy_loop:
+    lb $t4, 0($a0)     # Load byte from buffer at current position
+    beqz $t4, end_copy # Break loop if byte is null terminator
+    sb $t4, 0($a1)     # Store byte in buffer2 at current position
+    addi $a0, $a0, 1   # Move to the next byte in buffer
+    addi $a1, $a1, 1   # Move to the next position in buffer2
+
+    j copy_loop
+
+end_copy:
+    la $a0, buffer
+    subi $a1,$a1,1
+sub_copy:
+    lb $t5, 0($a0)
+    beqz $t2, stop_copy
+    subi $t2,$t2,1
+    sb $t5, 0($a1)
+    addi $a0, $a0, 1   # Move to the next byte in buffer
+    addi $a1, $a1, 1   # Move to the next position in buffer2
+    j sub_copy
+
+
+
+
+
+
+stop_copy:   
+
+    # Print shifted string
+    li $v0, 4
+    la $a0, msg
+    syscall
+    
+    li $v0, 4
+    la $a0, openBracket
+    syscall
+    
+    li $v0, 4
+    la $a0, buffer2
+    syscall
+    li $v0, 4
+    la $a0, closeBracket
+    syscall
+    j exit
+    
+   
+
+errorString:
+    li $v0, 4
+    la $a0, errorMsgString
+    syscall
+    j exit
+
+errorNumber:
+    li $v0, 4
+    la $a0, errorMsgNumber
+    syscall
+
+exit:
+    li $v0, 10
+    syscall

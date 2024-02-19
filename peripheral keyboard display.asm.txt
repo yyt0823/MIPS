@@ -1,0 +1,172 @@
+.data
+promptFirstName: .asciiz "First name: "
+
+outputFormat: .asciiz "You entered: "
+
+promptLastName: .asciiz "Last name: "
+comma: .asciiz ", "
+dot: .asciiz "."
+firstName: .space 20 
+lastName: .space 20    
+newline: .asciiz "\n"
+limit: .word 20
+
+.text
+.globl main
+
+
+main:
+    #prompt for first name
+    la $a0, promptFirstName
+    jal puts
+        
+    #new line char
+    la $a0, newline
+    jal puts
+    
+    #read first name
+    la $a0, firstName
+    lw $a1, limit
+    jal gets
+    
+    #prompt for last name
+    la $a0, promptLastName
+    jal puts
+    
+    #read last name
+    la $a0, lastName
+    jal gets
+    
+    #new line char
+    la $a0, newline
+    jal puts
+    
+    #print output format
+    la $a0, outputFormat
+    jal puts
+    #print firstname
+    la $a0, firstName
+    jal puts
+    
+    #print comma
+    la $a0, comma
+    jal puts
+    
+    #print last name
+    la $a0, lastName
+    jal puts
+    
+    #print dot
+    la $a0, dot
+    jal puts
+    
+    #finish program
+    j exit
+    
+    
+    
+    
+    
+    
+
+    
+    
+    
+ 
+
+
+
+
+
+
+
+#put char from slide
+PUTCHAR:
+    lui $a3, 0xffff     
+
+wait_for_ready:
+    lw $t1, 8($a3)         
+    andi $t1, $t1, 0x1  
+    beqz $t1, wait_for_ready 
+    sw $a0, 12($a3)        
+    jr $ra   
+
+
+puts:
+    addi $sp, $sp, -4   # save a0
+    sw $a0, 0($sp)      
+    move $t0, $a0       
+    li $v0, 0           
+
+output_loop:
+    addi $sp, $sp, -4  # save ra
+    sw $ra, 0($sp)
+    lb $a0, 0($t0)      # Load the current character from the string into $a0
+    beq $a0, $zero, end_output # If the current character is NULL, end the loop
+
+    jal PUTCHAR         # Call PUTCHAR to output the current character
+   
+    lw $ra, 0($sp)
+    addi $sp, $sp, 4  
+    
+    addi $t0, $t0, 1   # Increment the string pointer
+    addi $v0, $v0, 1   # Increment the output character count
+    j output_loop       # loop for next char
+
+end_output:
+    lw $a0, 0($sp)      # restore a0
+    addiu $sp, $sp, 4   
+    jr $ra              # Return to the calling function
+
+ 
+   
+     
+gets:
+    addi $sp, $sp, -8  
+    sw $a0, 0($sp)   
+    sw $a1, 4($sp)
+    li $t4, 10
+    li $t5, 0
+    
+    
+gets_loop:
+
+    addi $sp, $sp, -4  
+    sw $ra, 0($sp)   
+    jal GETCHAR    
+    lw $ra, 0($sp) 
+    addi $sp, $sp, 4  
+    beq $t4, $v0, gets_done
+    sb $v0, 0($a0)
+    addi $t5, $t5, 1
+    addi $a1, $a1, -1
+    beqz $a1, gets_done
+    addi $a0, $a0, 1
+    j gets_loop  
+      
+gets_done: 
+    sb $zero, 0($a0)
+    move $v0, $t5
+    lw $a0, 0($sp)   
+    lw $a1, 4($sp)
+    addi $sp, $sp, 8  
+    jr $ra
+                   
+         
+GETCHAR:
+lui $a3, 0xffff #base address of memory map
+CkReady:
+lw $t1, 0($a3) #read from receiver control reg
+andi $t1, $t1, 0x1 #extract ready bit
+beqz $t1, CkReady #if 1, then load char, else loop
+lw $v0, 4($a3) #load character from keyboard
+jr $ra 
+
+
+exit:
+li $v0, 10
+syscall
+
+
+
+
